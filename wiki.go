@@ -48,7 +48,7 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 	}
 }
 
-var validPath = regexp.MustCompile("^/(edit|save|view|delete)/([a-zA-Z0-9]+)$")
+var validPath = regexp.MustCompile("^/(delete|edit|save|view)/([a-zA-Z0-9]+)$")
 
 // This wraps handlers to validate titles
 func makeHandler(fn func (http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
@@ -99,6 +99,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 }
 
 func deleteHandler(w http.ResponseWriter, r *http.Request, title string) {
+	fmt.Println("Can we even get here?")
 	p, err := loadPage(title)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -107,13 +108,13 @@ func deleteHandler(w http.ResponseWriter, r *http.Request, title string) {
 	fmt.Println("Deleting "+p.Title)
 	err = p.delete()
 	p = nil
-	http.Redirect(w, r, "/edit/"+title, http.StatusFound)
+	http.Redirect(w, r, "/view/test", http.StatusFound)
 }
 
 func main() {
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
-	http.HandleFunc("/delete/", makeHandler(saveHandler))
+	http.HandleFunc("/delete/", makeHandler(deleteHandler))
 	http.ListenAndServe(":8080", nil)
 }
