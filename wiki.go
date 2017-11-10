@@ -34,18 +34,14 @@ func loadPage(title string) (*Page, error) {
 	return &Page{Title: title, Body: body}, nil
 }
 
-// Create a test page and save it
-// Load it and dump any errors
-// Print it
-func main() {
-	p1 := &Page{Title: "TestPage", Body: []byte("This is a sample Page.")}
-	p1.save()
-	p2, _ := loadPage("TestPage")
-	fmt.Println(string(p2.Body))
-}
-
-func viewHandler(w http:ResponseWriter, r *http.request) {
+func viewHandler(w http:ResponseWriter, r *http.Request) {
 	title := r.URL.Path[len("/view/"):]
 	p, _ := loadPage(title)
 	fmt.Fprintf(w, "<h1>%s</hi><div>%s</div>", p.Title, p.Body)
+}
+
+
+func main() {
+	http.HandleFunc("/view/", viewHandler)
+	http.ListenAndServe(":8080", nil)
 }
