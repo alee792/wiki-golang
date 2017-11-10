@@ -1,0 +1,11 @@
+<h1>
+    Hey, it's a tiny "wiki" written in Go
+</h1>
+<h2>Check some of these pages out</h2>
+<ul>
+    {{range $page := .}}
+    <li>
+        <a href="/view/{{$page}}">{{$page}}</a>
+    </li>
+    {{end}}
+</ul>

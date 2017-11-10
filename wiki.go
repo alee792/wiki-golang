@@ -5,8 +5,9 @@ import (
 	"html/template"
 	"io/ioutil"
 	"net/http"
-	"regexp"
 	"os"
+	"regexp"
+	"strings"
 )
 
 type Page struct {
@@ -21,7 +22,7 @@ func (p *Page) save() error {
 
 func (p *Page) delete() error {
 	filename := p.Title + ".txt"
-	fmt.Println("Deleting "+filename)
+	fmt.Println("Deleting " + filename)
 	return os.Remove(filename)
 }
 
@@ -34,7 +35,7 @@ func loadPage(title string) (*Page, error) {
 	return &Page{Title: title, Body: body}, nil
 }
 
-var templates = template.Must(template.ParseFiles("edit.html", "view.html", "delete.html"))
+var templates = template.Must(template.ParseFiles("index.html", "edit.html", "view.html", "delete.html"))
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 	t, err := template.ParseFiles(tmpl + ".html")
@@ -51,7 +52,7 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 var validPath = regexp.MustCompile("^/(delete|edit|save|view)/([a-zA-Z0-9]+)$")
 
 // This wraps handlers to validate titles
-func makeHandler(fn func (http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
+func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		m := validPath.FindStringSubmatch(r.URL.Path)
 		if m == nil {
@@ -62,26 +63,48 @@ func makeHandler(fn func (http.ResponseWriter, *http.Request, string)) http.Hand
 	}
 }
 
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	files, err := ioutil.ReadDir("./")
+	if err != nil {
+		fmt.Println(err)
+	}
+	var pages []string
+	for _, f := range files {
+		page := strings.Split(f.Name(), ".")
+		if page[len(page)-1] == "txt" {
+			pages = append(pages, page[0])
+		}
+	}
+	t, err := template.ParseFiles("index.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err = t.Execute(w, pages)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
 // Grab the path after /view/
 // Find a file, if any
 // Format and print to DOM
 func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
-    p, err := loadPage(title)
-    if err != nil {
-        http.Redirect(w, r, "/edit/"+title, http.StatusFound)
-        return
-    }
-	fmt.Println("Viewing "+p.Title)
-    renderTemplate(w, "view", p)
+	p, err := loadPage(title)
+	if err != nil {
+		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
+		return
+	}
+	fmt.Println("Viewing " + p.Title)
+	renderTemplate(w, "view", p)
 }
-
 
 func editHandler(w http.ResponseWriter, r *http.Request, title string) {
 	p, err := loadPage(title)
 	if err != nil {
 		p = &Page{Title: title}
 	}
-	fmt.Println("Editing "+p.Title)	
+	fmt.Println("Editing " + p.Title)
 	renderTemplate(w, "edit", p)
 }
 
@@ -93,8 +116,8 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	}	
-	fmt.Println("Saving "+p.Title)	
+	}
+	fmt.Println("Saving " + p.Title)
 	http.Redirect(w, r, "/view/"+title, http.StatusFound)
 }
 
@@ -104,10 +127,10 @@ func deleteHandler(w http.ResponseWriter, r *http.Request, title string) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	}	
-	fmt.Println("Deleting "+p.Title)
+	}
+	fmt.Println("Deleting " + p.Title)
 	err = p.delete()
-    renderTemplate(w, "delete", p)
+	renderTemplate(w, "delete", p)
 }
 
 func main() {
@@ -115,5 +138,6 @@ func main() {
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
 	http.HandleFunc("/delete/", makeHandler(deleteHandler))
+	http.HandleFunc("/", indexHandler)
 	http.ListenAndServe(":8080", nil)
 }
