@@ -8,40 +8,51 @@ import (
 
 type Page struct {
 	Title string
-	Body []byte
+	Body  []byte
 }
 
-// This function saves a Page's Body to a text file
-// The name of the file is the Page's Title
-// nil is returned upon sucess
-// error is returned otherwise
 func (p *Page) save() error {
 	filename := p.Title + ".txt"
-	// Third arg refers to RW permissions
 	return ioutil.WriteFile(filename, p.Body, 0600)
 }
 
-// This function takes a title string and loads a file
-// Looks like you define the return
 func loadPage(title string) (*Page, error) {
 	filename := title + ".txt"
 	body, err := ioutil.ReadFile(filename)
 	if err != nil {
-		// Return no Page, and the error
 		return nil, err
 	}
-	// Returns a new Page literal and nil for no error
 	return &Page{Title: title, Body: body}, nil
 }
 
-func viewHandler(w http:ResponseWriter, r *http.Request) {
+// Grab the path after /view/
+// Find a file, if any
+// Format and print to DOM
+func viewHandler(w http.ResponseWriter, r *http.Request) {
 	title := r.URL.Path[len("/view/"):]
 	p, _ := loadPage(title)
-	fmt.Fprintf(w, "<h1>%s</hi><div>%s</div>", p.Title, p.Body)
+	fmt.Fprintf(w, "<h1>%s</h1><div>%s</div>", p.Title, p.Body)
 }
 
 
+func editHandler(w http.ResponseWriter, r *http.Request) {
+	title := r.URL.Path[len("/edit/"):]
+	p, err := loadPage(title)
+	if err != nil {
+		p = &Page{Title: title}
+	}
+    fmt.Fprintf(w, "<h1>Editing %s</h1>"+
+        "<form action=\"/save/%s\" method=\"POST\">"+
+        "<textarea name=\"body\">%s</textarea><br>"+
+        "<input type=\"submit\" value=\"Save\">"+
+        "</form>",
+        p.Title, p.Title, p.Body)
+
+}
+
 func main() {
 	http.HandleFunc("/view/", viewHandler)
+	http.HandleFunc("/edit/", editHandler)
+	http.HandleFunc("/save/", saveHandler)
 	http.ListenAndServe(":8080", nil)
 }
