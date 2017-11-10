@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -20,6 +21,7 @@ func (p *Page) save() error {
 
 func (p *Page) delete() error {
 	filename := p.Title + ".txt"
+	fmt.Println("Deleting "+filename)
 	return os.Remove(filename)
 }
 
@@ -69,6 +71,7 @@ func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
         http.Redirect(w, r, "/edit/"+title, http.StatusFound)
         return
     }
+	fmt.Println("Viewing "+p.Title)
     renderTemplate(w, "view", p)
 }
 
@@ -78,6 +81,7 @@ func editHandler(w http.ResponseWriter, r *http.Request, title string) {
 	if err != nil {
 		p = &Page{Title: title}
 	}
+	fmt.Println("Editing "+p.Title)	
 	renderTemplate(w, "edit", p)
 }
 
@@ -89,7 +93,8 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	}
+	}	
+	fmt.Println("Saving "+p.Title)	
 	http.Redirect(w, r, "/view/"+title, http.StatusFound)
 }
 
@@ -99,8 +104,10 @@ func deleteHandler(w http.ResponseWriter, r *http.Request, title string) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}	
+	fmt.Println("Deleting "+p.Title)
 	err = p.delete()
-	http.Redirect(w, r, "/view/", http.StatusFound)
+	p = nil
+	http.Redirect(w, r, "/edit/"+title, http.StatusFound)
 }
 
 func main() {
