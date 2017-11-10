@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"net/http"
 )
 
 type Page struct {
@@ -41,4 +42,10 @@ func main() {
 	p1.save()
 	p2, _ := loadPage("TestPage")
 	fmt.Println(string(p2.Body))
+}
+
+func viewHandler(w http:ResponseWriter, r *http.request) {
+	title := r.URL.Path[len("/view/"):]
+	p, _ := loadPage(title)
+	fmt.Fprintf(w, "<h1>%s</hi><div>%s</div>", p.Title, p.Body)
 }
