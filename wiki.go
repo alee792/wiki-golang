@@ -34,7 +34,7 @@ func loadPage(title string) (*Page, error) {
 	return &Page{Title: title, Body: body}, nil
 }
 
-var templates = template.Must(template.ParseFiles("edit.html", "view.html"))
+var templates = template.Must(template.ParseFiles("edit.html", "view.html", "delete.html"))
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 	t, err := template.ParseFiles(tmpl + ".html")
@@ -107,8 +107,7 @@ func deleteHandler(w http.ResponseWriter, r *http.Request, title string) {
 	}	
 	fmt.Println("Deleting "+p.Title)
 	err = p.delete()
-	p = nil
-	http.Redirect(w, r, "/view/test", http.StatusFound)
+    renderTemplate(w, "delete", p)
 }
 
 func main() {
