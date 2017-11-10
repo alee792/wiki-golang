@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"html/template"
 	"io/ioutil"
 	"net/http"
 )
@@ -41,6 +41,7 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		p = &Page{Title: title}
 	}
+	// Quotes need to be escaped.
     fmt.Fprintf(w, "<h1>Editing %s</h1>"+
         "<form action=\"/save/%s\" method=\"POST\">"+
         "<textarea name=\"body\">%s</textarea><br>"+
